@@ -78,12 +78,12 @@ function createAInstanceOfUser(request) {
     const newUser = {
         uid: request.body.uid,
         name: request.body.name,
-        password: request.body.password,
         email: request.body.email,
+        password: request.body.password,
         imageUrl: request.body.imageUrl,
         phoneNumber: request.body.phoneNumber,
-        regionActive: request.body.regionActive,
-        typeOfUser: request.body.typeOfUser
+        isActive: request.body.isActive,
+        isShipper: request.body.isShipper
     }
     return newUser
 }

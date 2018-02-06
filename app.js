@@ -15,7 +15,7 @@ var mongoose = require("mongoose")
 
 // Use native Promies
 mongoose.Promise = global.Promise
-mongoose.connect('mongodb://admin:admin@ds111568.mlab.com:11568/wheel-ship-db', options).then(
+mongoose.connect('mongodb://admin:admin@ds111568.mlab.com:11568/wheel-ship-db').then(
     () => {
         console.log("connect to db successfully")
     },
