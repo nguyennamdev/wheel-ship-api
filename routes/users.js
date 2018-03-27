@@ -14,7 +14,7 @@ router.post('/insert_new_user', function(request, response) {
             if (err) {
                 responseResult("Failed", response, "Query find is failed. Error is " + err, {})
             } else {
-                // if uid is exist, do not allow to insert 
+                // if uid is exist, do not allows to insert 
                 if (data.length > 0) {
                     responseResult("Failed", response, "User is already", {})
                 } else {
