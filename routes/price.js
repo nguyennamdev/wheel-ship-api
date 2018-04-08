@@ -17,7 +17,7 @@ router.get('/', function(request, response) {
 })
 
 router.get('/price_weights', function(request, response) {
-    Price.find({ "category": "weight" }).sort({ "pId": 1 }).exec(function(error, data) {
+    Price.find({ "category": "price_of_weight" }).sort({ "pId": 1 }).exec(function(error, data) {
         if (error) {
             return
         }
