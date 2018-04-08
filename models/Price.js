@@ -7,6 +7,7 @@ const Price = new Schema({
     pId: { type: String, required: true },
     name: { type: String },
     text: { type: String },
+    category: { type: String, default: "" },
     value: { type: Number }
 })
 
