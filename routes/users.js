@@ -16,7 +16,7 @@ router.post('/insert_new_user', function(request, response) {
             } else {
                 // if uid is exist, do not allows to insert 
                 if (data.length > 0) {
-                    responseResult("Failed", response, "User is already", {})
+                    responseResult("Failed", response, "User already", {})
                 } else {
                     // create a user
                     const user = createAInstanceOfUser(request)
