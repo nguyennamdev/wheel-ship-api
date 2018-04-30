@@ -10,7 +10,6 @@ var users = require('./routes/users');
 var prices = require('./routes/price');
 var orders = require('./routes/orders');
 
-
 var app = express();
 
 // connect to mongo db

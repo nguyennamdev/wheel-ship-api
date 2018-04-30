@@ -28,7 +28,8 @@ const Order = new Schema({
     status: { type: String, enum: ["wait", "hadShipper"], default: "wait" },
     prepayment: { type: Number, default: 0 },
     feeShip: { type: Number, default: 0 },
-    overheads: { type: Number, default: 0 }
+    overheads: { type: Number, default: 0 },
+    isComplete: { type: Boolean, default: false }
 })
 
 module.exports = mongoose.model('Order', Order);

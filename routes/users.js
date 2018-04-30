@@ -85,7 +85,7 @@ function createAInstanceOfUser(request) {
         isActive: request.body.isActive,
         isShipper: request.body.isShipper
     }
-    return newUser
+    return newUser;
 }
 
 function insertNewUser(newUser, response) {
@@ -107,4 +107,4 @@ function responseResult(result, response, message, data) {
 }
 
 
-module.exports = router;
+module.exports = router
