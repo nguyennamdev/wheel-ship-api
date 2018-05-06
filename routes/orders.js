@@ -36,33 +36,42 @@ router.post('/insert_new_order', function(request, response) {
     }
 });
 
-router.get('/order_by_user/:userId', function(request, response, next) {
+router.get('/order_by_user', function(request, response, next) {
     var conditions = {}
-    conditions.userId = request.params.userId
-    Order.find(conditions).exec(function(err, res) {
-        if (err) {
-            responseResult("Failed", response, "Find query failed. Error was ", {});
-        } else {
-            responseResult("OK", response, "Find query successfully", res);
-        }
-    })
+    if (request.query.userId && request.query.userId.length > 0) {
+        conditions.userId = request.query.userId
+        Order.find(conditions).exec(function(err, res) {
+            if (err) {
+                responseResult("Failed", response, "Find query failed. Error was ", {});
+            } else {
+                responseResult("OK", response, "Find query successfully", res);
+            }
+        })
+    } else {
+        responseResult("Failed", response, "user id is null", {});
+    }
 })
 
-router.get('/order_complete/:userId', function(request, response, next) {
+router.get('/order_complete', function(request, response, next) {
     // query find order complete by user id
     var userIdCondition = {}
-    userIdCondition.userId = request.params.userId
-        // secound condition
-    var isCompleteCondition = { "isComplete": true }
-    Order.find({
-        $and: [userIdCondition, isCompleteCondition]
-    }).exec(function(err, res) {
-        if (err) {
-            responseResult("Failed", response, "Find query failed. Error was " + err);
-        } else {
-            responseResult("OK", response, "Find query successfully", res);
-        }
-    })
+    if (request.query.userId && request.query.userId.length > 0) {
+        // second condition
+        var isCompleteCondition = { "isComplete": true }
+        userIdCondition.userId = request.query.userId;
+        Order.find({
+            $and: [userIdCondition, isCompleteCondition]
+        }).exec(function(err, res) {
+            if (err) {
+                responseResult("Failed", response, "Find query failed. Error was " + err);
+            } else {
+                responseResult("OK", response, "Find query successfully", res);
+            }
+        })
+    } else {
+        responseResult("Failed", response, "user id is null", {});
+    }
+
 })
 
 function createNewOrder(request) {
