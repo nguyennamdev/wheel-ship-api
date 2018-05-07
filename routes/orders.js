@@ -97,8 +97,11 @@ function createNewOrder(request) {
         status: request.body.status,
         prepayment: request.body.prepayment,
         feeShip: request.body.feeShip,
+        priceOfWeight: request.body.priceOfWeight,
+        priceOfOrderFragile: request.body.priceOfOrderFragile,
         overheads: request.body.overheads,
-        isComplete: request.body.isComplete
+        isComplete: request.body.isComplete,
+        shipperId: request.body.shipperId
     }
     return newOrder
 }
