@@ -81,11 +81,11 @@ function createNewOrder(request) {
         originAddress: request.body.originAddress,
         destinationAddress: request.body.destinationAddress,
         originLocation: {
-            lattitude: request.body.oriLattitude,
+            latitude: request.body.oriLatitude,
             longtitude: request.body.oriLongtitude
         },
         destinationLocation: {
-            lattitude: request.body.desLattitude,
+            latitude: request.body.desLatitude,
             longtitude: request.body.desLongtitude
         },
         distance: request.body.distance,
