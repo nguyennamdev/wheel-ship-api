@@ -11,11 +11,11 @@ const Order = new Schema({
     originAddress: { type: String, required: true },
     destinationAddress: { type: String, required: true },
     originLocation: new Schema({
-        lattitude: { type: Number },
+        latitude: { type: Number },
         longtitude: { type: Number }
     }),
     destinationLocation: new Schema({
-        lattitude: { type: Number },
+        latitude: { type: Number },
         longtitude: { type: Number }
     }),
     distance: { type: Number, default: 0 },
