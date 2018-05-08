@@ -12,11 +12,11 @@ router.post('/insert_new_user', function(request, response) {
         conditions.uid = request.body.uid
         User.find(conditions).limit(1).exec(function(err, data) {
             if (err) {
-                responseResult("Failed", response, "Query find is failed. Error is " + err, {})
+                responseResult(false, response, "Query find is failed. Error is " + err, {})
             } else {
                 // if uid is exist, do not allows to insert 
                 if (data.length > 0) {
-                    responseResult("Failed", response, "User already", {})
+                    responseResult(false, response, "User already", {})
                 } else {
                     // create a user
                     const user = createAInstanceOfUser(request)
@@ -27,7 +27,7 @@ router.post('/insert_new_user', function(request, response) {
             }
         })
     } else {
-        responseResult("Failed", response, "You must enter your uid", {})
+        responseResult(false, response, "You must enter your uid", {})
     }
 
 })
@@ -41,15 +41,15 @@ router.put('/update_a_user', function(request, response) {
 
         User.findOneAndUpdate(conditions, { $set: newUser }, { new: true }, (err, updateUser) => {
             if (err) {
-                responseResult("Failed", response, "Can't update user. Error is " + err)
+                responseResult(false, response, "Can't update user. Error is " + err)
             } else if (updateUser == null) { // if it find uid unsuccessfu
-                responseResult("Failed", response, "Can't found uid")
+                responseResult(false, response, "Can't found uid")
             } else { // if it find uid successful then to update
-                responseResult("OK", response, "Update user is successfully", updateUser)
+                responseResult(true, response, "Update user is successfully", updateUser)
             }
         })
     } else {
-        responseResult("Failed", response, "failed", "you must enter your uid")
+        responseResult(false, response, "failed", "you must enter your uid")
     }
 })
 
@@ -61,15 +61,15 @@ router.delete('/delete_a_user', function(request, response) {
             // execute remove user in db
         User.findOneAndRemove(conditions, function(err, data) {
             if (err) {
-                responseResult("Failed", response, "Can't delete user that. Error is " + err)
+                responseResult(false, response, "Can't delete user that. Error is " + err)
             } else if (data != null) { // if it find uid successful then to delete
-                responseResult("OK", response, "Deleted user successfully", data)
+                responseResult(true, response, "Deleted user successfully", data)
             } else { // if it find uid unsuccessful 
-                responseResult("Failed", response, "Can't found uid")
+                responseResult(false, response, "Can't found uid")
             }
         })
     } else {
-        responeFail(response, "failed", "you must enter your uid")
+        responeFail(response, false, "you must enter your uid")
     }
 })
 
@@ -91,9 +91,9 @@ function createAInstanceOfUser(request) {
 function insertNewUser(newUser, response) {
     User.create(newUser, function(error, data) {
         if (error) {
-            responseResult("Failed", response, "Insert failed. Error is " + error, res)
+            responseResult(false, response, "Insert failed. Error is " + error, res)
         } else {
-            responseResult("OK", response, "Insert new user successfully", data)
+            responseResult(true, response, "Insert new user successfully", data)
         }
     })
 }

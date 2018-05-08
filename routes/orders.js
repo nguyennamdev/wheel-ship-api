@@ -13,26 +13,26 @@ router.post('/insert_new_order', function(request, response) {
         conditions.orderId = request.body.orderId;
         Order.find(conditions).limit(1).exec(function(err, res) {
             if (err) {
-                responseResult("Failed", response, "Query find is failed. Error is " + err, {})
+                responseResult(false, response, "Query find is failed. Error is " + err, {})
             } else {
                 // if orderId is exist, do not allows to insert 
                 if (res.length > 0) {
-                    responseResult("Failed", response, "Order alrealy", {})
+                    responseResult(false, response, "Order alrealy", {})
                 } else {
                     // create new order 
                     const order = createNewOrder(request);
                     Order.create(order, function(error, data) {
                         if (error) {
-                            responseResult("Failed", response, "Insert failed. Error is " + error, res)
+                            responseResult(false, response, "Insert failed. Error is " + error, res)
                         } else {
-                            responseResult("OK", response, "Insert new order successfully", data)
+                            responseResult(true, response, "Insert new order is successfully", data)
                         }
                     })
                 }
             }
         })
     } else {
-        responseResult("Failed", response, "You must enter your uid", {})
+        responseResult(false, response, "You must enter your uid", {})
     }
 });
 
@@ -42,13 +42,13 @@ router.get('/order_by_user', function(request, response, next) {
         conditions.userId = request.query.userId
         Order.find(conditions).exec(function(err, res) {
             if (err) {
-                responseResult("Failed", response, "Find query failed. Error was ", {});
+                responseResult(false, response, "Find query failed. Error was " + err, {});
             } else {
-                responseResult("OK", response, "Find query successfully", res);
+                responseResult(true, response, "Find query successfully", res);
             }
         })
     } else {
-        responseResult("Failed", response, "user id is null", {});
+        responseResult(true, response, "user id is null", {});
     }
 })
 
@@ -63,15 +63,31 @@ router.get('/order_complete', function(request, response, next) {
             $and: [userIdCondition, isCompleteCondition]
         }).exec(function(err, res) {
             if (err) {
-                responseResult("Failed", response, "Find query failed. Error was " + err);
+                responseResult(false, response, "Find query failed. Error was " + err);
             } else {
-                responseResult("OK", response, "Find query successfully", res);
+                responseResult(true, response, "Find query is successfully", res);
             }
         })
     } else {
-        responseResult("Failed", response, "user id is null", {});
+        responseResult(false, response, "user id is null", {});
     }
 
+})
+
+router.delete('/delete_order', function(request, response) {
+    var conditions = {}
+    if (request.body.orderId && request.body.orderId.length > 0) {
+        conditions.orderId = request.body.orderId
+        Order.findOneAndRemove(conditions).exec(function(err, res) {
+            if (err) {
+                responseResult(false, response, "Delete query failed. Error was " + err, {})
+            } else {
+                responseResult(true, response, "Delete query is successfully", res)
+            }
+        })
+    } else {
+        responseResult(false, response, "order id is null", {})
+    }
 })
 
 function createNewOrder(request) {
