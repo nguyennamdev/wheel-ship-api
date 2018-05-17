@@ -97,6 +97,7 @@ router.put('/update_order', function(request, response) {
     if (request.body.orderId && request.body.orderId.length > 0) {
         conditions.orderId = request.body.orderId
         const orderToUpdate = createOrderToUpdate(request)
+        console.log(orderToUpdate)
         Order.findOneAndUpdate(conditions, { $set: orderToUpdate }, { new: true }, (err, data) => {
             if (err) {
                 responseResult(false, response, "Update query failed. Error was " + err, {})
