@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 const User = require('../models/User')
+const bcrypt = require('bcrypt-nodejs')
 
 /////// MARK : routes ////////////
 
@@ -29,7 +30,55 @@ router.post('/insert_new_user', function(request, response) {
     } else {
         responseResult(false, response, "You must enter your uid", {})
     }
+})
 
+router.post('/login', function(request, response, next) {
+    if (request.body.logEmail && request.body.logPassword) {
+        const email = request.body.logEmail
+        const password = request.body.logPassword
+        User.findOne({ email: email })
+            .exec(function(err, userData) {
+                if (err) {
+                    return responseResult(false, response, err, {})
+                } else if (!userData) {
+                    var err = new Error("User not found")
+                    err.status = 401;
+                    return responseResult(false, response, err, {})
+                }
+                if (password == userData.password) {
+                    request.session.userId = userData.uid
+                    User.findOne({ uid: request.session.userId }).exec(function(err, user) {
+                        if (err) {
+                            responseResult(false, response, err, {})
+                            return
+                        } else {
+                            if (user == null) {
+                                var err = new Error('Not authorized! Go back!')
+                                responseResult(false, response, err, {})
+                            } else {
+                                responseResult(true, response, "profile", user)
+                            }
+                        }
+                    })
+                }
+            })
+    }
+})
+
+// GET for logout 
+router.get('/logout', function(request, response, next) {
+    if (request.session) {
+        // delete session object
+        request.session.destroy(function(err) {
+            if (err) {
+                responseResult(false, response, err, {})
+                return
+            } else {
+                responseResult(true, response, "logouted", {})
+            }
+
+        })
+    }
 })
 
 // MARK: Methods put
