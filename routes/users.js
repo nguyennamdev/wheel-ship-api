@@ -2,16 +2,23 @@ var express = require('express');
 var router = express.Router();
 
 const User = require('../models/User')
-const bcrypt = require('bcrypt-nodejs')
 
 /////// MARK : routes ////////////
 
 // create method post request 
 router.post('/insert_new_user', function(request, response) {
-    var conditions = {}
-    if (request.body.uid && request.body.uid.length > 0) {
-        conditions.uid = request.body.uid
-        User.find(conditions).limit(1).exec(function(err, data) {
+    var conditionEmail = {}
+    var conditionUID = {}
+    if (request.body.email && request.body.uid) {
+        conditionEmail.email = request.body.email
+        conditionUID.uid = request.body.uid
+
+        // query 
+        User.find({
+            $or: [
+                conditionUID, conditionEmail
+            ]
+        }).limit(1).exec(function(err, data) {
             if (err) {
                 responseResult(false, response, "Query find failed. Error is " + err, {})
             } else {
@@ -60,6 +67,8 @@ router.post('/login', function(request, response, next) {
                             }
                         }
                     })
+                } else {
+                    responseResult(false, response, "mật khẩu không đúng", {})
                 }
             })
     }
@@ -184,7 +193,7 @@ function createAInstanceOfUser(request) {
 function insertNewUser(newUser, response) {
     User.create(newUser, function(error, data) {
         if (error) {
-            responseResult(false, response, "Insert failed. Error is " + error, res)
+            responseResult(false, response, "Insert failed. Error is " + error, {})
         } else {
             responseResult(true, response, "Insert new user successfully", data)
         }

@@ -12,20 +12,7 @@ const UserSchema = new Schema({
     imageUrl: { type: String, default: "" },
     phoneNumber: { type: String, default: "" },
     isActive: { type: Number, default: 0 }, // 0 = isActive
-    isShipper: { type: Number, default: 0 } // 0 = orderer 
-})
-
-
-//// hashing a password before saving it to the database
-UserSchema.pre('save', function(next) {
-    var user = this
-    bcrypt.hash(user.password, 10, function(err, hash) {
-        if (err) {
-            return next(err)
-        }
-        user.password = hash;
-        next()
-    })
+    isShipper: { type: Number, default: 0 } // 1 = isShipper 
 })
 
 var User = mongoose.model('User', UserSchema);
