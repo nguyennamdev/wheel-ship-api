@@ -5,6 +5,47 @@ const Order = require('../models/Order');
 
 /////// MARK : routes //////////
 
+// MARK: Methods get
+router.get('/list_order', function(require, response) {
+    Order.aggregate([{
+            $match: {
+                $or: [
+                    { status: 0 },
+                    { status: 1 }
+                ]
+            }
+        }, {
+            $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "uid",
+                as: "userData"
+            }
+        }, {
+            $unwind: "$userData"
+        },
+        {
+            $project: {
+                "userData._id": 0,
+                "userData.uid": 0,
+                "userData.password": 0,
+                "userData.isActive": 0,
+                "userData.isShipper": 0,
+                "userData.email": 0,
+                "userData.imageUrl": 0,
+                "userData.name": 0
+            }
+        }
+    ]).exec(
+        function(err, data) {
+            if (err) {
+                responseResult(false, response, "Error " + err, {})
+            } else {
+                responseResult(true, response, "Query select was successful", data)
+            }
+        }
+    )
+})
 
 // MARK: Methods post
 
@@ -92,6 +133,43 @@ router.get('/order_by_orderId', function(request, response) {
 })
 
 // MARK: Method put
+router.put('/accept_order', function(request, response) {
+    if (request.body.shipperId && request.body.orderId) {
+        const shipperId = request.body.shipperId
+        const orderId = request.body.orderId
+
+        Order.findOne({
+            $and: [
+                { orderId: orderId },
+                { shipperId: "" },
+                { status: 0 }
+            ]
+        }, function(err, orderData) {
+            if (err) {
+                responseResult("False", response, "Error is " + err, {})
+            } else if (!orderData) {
+                // order had shipper id 
+                responseResult("WaitResponse", response, "An order has been placed by another shipper", {})
+            } else {
+                // order doesn't shipper 
+                // execute update shipperId to order
+                Order.update({
+                    orderId: orderId
+                }, {
+                    $set: { shipperId: shipperId, status: 1 }
+                }, function(err, raw) {
+                    if (err) {
+                        responseResult("False", response, "Error is " + err, {})
+                    } else {
+                        responseResult("Wait", response, "Accept request to orderer is successfully", {})
+                    }
+                })
+            }
+        })
+
+    }
+})
+
 router.put('/update_order', function(request, response) {
     var conditions = {}
     if (request.body.orderId && request.body.orderId.length > 0) {

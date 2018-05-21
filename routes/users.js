@@ -39,6 +39,35 @@ router.post('/insert_new_user', function(request, response) {
     }
 })
 
+router.put('/save_order', function(request, response, next) {
+    if (request.body.orderId && request.body.uid) {
+        const orderId = request.body.orderId
+        const userId = request.body.uid
+        console.log(orderId)
+        console.log(userId)
+            // check order id exist
+        User.findOne({
+            orders: orderId
+        }).exec(function(err, data) {
+            if (err) {
+                responseResult(false, response, "Error is " + err)
+                return
+            } else if (data) {
+                // order is exist
+                responseResult(true, response, "orderId is exist", {})
+            } else {
+                // order didn't exist 
+                // execute insert orderId
+                User.update({ uid: userId }, { $push: { orders: orderId } }, function(err, raw) {
+                    responseResult(true, response, "Save query was successful")
+                })
+            }
+        })
+    } else {
+        responseResult(false, response, "You must enter uid and order id")
+    }
+})
+
 router.post('/login', function(request, response, next) {
     if (request.body.logEmail && request.body.logPassword) {
         const email = request.body.logEmail
@@ -91,6 +120,16 @@ router.get('/logout', function(request, response, next) {
 })
 
 // MARK: Methods put
+router.put('/accept_order', function(request, response) {
+    if (request.body.uid && request.body.orderId) {
+        const shipperId = request.body.uid
+        const orderId = request.body.orderId
+        User.findOne({ orderId: orderId })
+
+    }
+})
+
+
 router.put('/update_phone_number', function(request, response) {
     var conditions = {}
     if (request.body.uid && request.body.uid.length > 0) {
