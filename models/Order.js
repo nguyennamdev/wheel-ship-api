@@ -25,7 +25,7 @@ const Order = new Schema({
     note: { type: String, default: "" },
     phoneReceiver: { type: String },
     weight: { type: String },
-    status: { type: Number, default: 0 }, // 0 as wait, 1 as wait response , 1 as had shipper
+    status: { type: Number, default: 0 }, // 0 as wait, 1 as wait response , 2 as had shipper
     prepayment: { type: Number, default: 0 },
     feeShip: { type: Number, default: 0 },
     priceOfWeight: { type: Number, default: 0 },

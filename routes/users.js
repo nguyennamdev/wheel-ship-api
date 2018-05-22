@@ -43,14 +43,12 @@ router.put('/save_order', function(request, response, next) {
     if (request.body.orderId && request.body.uid) {
         const orderId = request.body.orderId
         const userId = request.body.uid
-        console.log(orderId)
-        console.log(userId)
-            // check order id exist
+            // check for order that exist
         User.findOne({
             orders: orderId
         }).exec(function(err, data) {
             if (err) {
-                responseResult(false, response, "Error is " + err)
+                responseResult(false, response, "Error is " + err, {})
                 return
             } else if (data) {
                 // order is exist
@@ -59,12 +57,37 @@ router.put('/save_order', function(request, response, next) {
                 // order didn't exist 
                 // execute insert orderId
                 User.update({ uid: userId }, { $push: { orders: orderId } }, function(err, raw) {
-                    responseResult(true, response, "Save query was successful")
+                    responseResult(true, response, "Save query was successful", {})
                 })
             }
         })
     } else {
-        responseResult(false, response, "You must enter uid and order id")
+        responseResult(false, response, "You must enter uid and order id", {})
+    }
+})
+
+router.put('/unsave_order', function(request, response, next) {
+    if (request.body.orderId && request.body.uid) {
+        const orderId = request.body.orderId
+        const userId = request.body.uid
+            // check for order that exist
+        User.find({
+            orders: orderId
+        }).exec(function(err, data) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else if (data) {
+                // order is exist
+                // execute to remove order id
+                User.update({ uid: userId }, { $pull: { orders: orderId } }, function(err, raw) {
+                    responseResult(true, response, "Unsave query was successful", {})
+                })
+            } else {
+                responseResult(false, response, "order id isn't exist")
+            }
+        })
+    } else {
+        responseResult(false, response, "You must enter uid and order id", {})
     }
 })
 
@@ -120,14 +143,7 @@ router.get('/logout', function(request, response, next) {
 })
 
 // MARK: Methods put
-router.put('/accept_order', function(request, response) {
-    if (request.body.uid && request.body.orderId) {
-        const shipperId = request.body.uid
-        const orderId = request.body.orderId
-        User.findOne({ orderId: orderId })
 
-    }
-})
 
 
 router.put('/update_phone_number', function(request, response) {
@@ -227,7 +243,6 @@ function createAInstanceOfUser(request) {
     }
     return newUser;
 }
-
 
 function insertNewUser(newUser, response) {
     User.create(newUser, function(error, data) {

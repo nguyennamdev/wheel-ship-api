@@ -2,18 +2,14 @@ var express = require('express');
 var router = express.Router();
 
 const Order = require('../models/Order');
+const User = require('../models/User');
 
 /////// MARK : routes //////////
 
 // MARK: Methods get
 router.get('/list_order', function(require, response) {
     Order.aggregate([{
-            $match: {
-                $or: [
-                    { status: 0 },
-                    { status: 1 }
-                ]
-            }
+            $match: { status: 0 }
         }, {
             $lookup: {
                 from: "users",
@@ -45,6 +41,146 @@ router.get('/list_order', function(require, response) {
             }
         }
     )
+})
+
+// method get list order saved by shipper
+router.get('/order_saved_by_shipper', function(request, response) {
+    if (request.query.shipperId) {
+        const shipperId = request.query.shipperId
+            // find to get list order
+        User.findOne({ uid: shipperId }, function(err, userData) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else {
+                // get list order by array order id 
+                Order.aggregate([{
+                        $match: {
+                            $and: [{ orderId: { "$in": userData.orders } }, { isComplete: false }]
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "userId",
+                            foreignField: "uid",
+                            as: "userData"
+                        }
+                    },
+                    {
+                        $unwind: "$userData"
+                    },
+                    {
+                        $project: {
+                            "userData._id": 0,
+                            "userData.uid": 0,
+                            "userData.password": 0,
+                            "userData.isActive": 0,
+                            "userData.isShipper": 0,
+                            "userData.email": 0,
+                            "userData.imageUrl": 0,
+                            "userData.name": 0
+                        }
+                    }
+                ]).exec(function(err, orderData) {
+                    if (err) {
+                        responseResult(false, response, "Error is " + err, {})
+                    } else {
+                        responseResult(true, response, "Find query was successful", orderData)
+                    }
+                })
+            }
+        })
+
+    } else {
+        responseResult(false, response, "You must enter shipper id", {})
+    }
+})
+
+router.get('/order_accepted_by_shipper', function(request, response) {
+    if (request.query.shipperId) {
+        const shipperId = request.query.shipperId
+            // find list order has shipper 
+        Order.aggregate([{
+                $match: {
+                    $and: [
+                        { shipperId: shipperId },
+                        { isComplete: false }
+                    ]
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "uid",
+                    as: "userData"
+                }
+            },
+            {
+                $unwind: "$userData"
+            },
+            {
+                $project: {
+                    "userData._id": 0,
+                    "userData.uid": 0,
+                    "userData.password": 0,
+                    "userData.isActive": 0,
+                    "userData.isShipper": 0,
+                    "userData.email": 0,
+                    "userData.imageUrl": 0,
+                    "userData.name": 0
+                }
+            }
+        ]).exec(function(err, orderData) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else {
+                responseResult(true, response, "Find query was successful", orderData)
+            }
+        })
+    } else {
+        responseResult(false, response, "You must pass shipper id to parameters")
+    }
+})
+
+router.get('/list_order_completed', function(request, response) {
+    if (request.query.shipperId) {
+        const shipperId = request.query.shipperId
+        Order.aggregate([{
+                $match: { $and: [{ shipperId: shipperId }, { isComplete: true }] }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "uid",
+                    as: "userData"
+                }
+            },
+            {
+                $unwind: "$userData"
+            },
+            {
+                $project: {
+                    "userData._id": 0,
+                    "userData.uid": 0,
+                    "userData.password": 0,
+                    "userData.isActive": 0,
+                    "userData.isShipper": 0,
+                    "userData.email": 0,
+                    "userData.imageUrl": 0,
+                    "userData.name": 0
+                }
+            }
+        ]).exec(function(err, orderData) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else {
+                responseResult(true, response, "Find query was successful", orderData)
+            }
+        })
+    }
+
 })
 
 // MARK: Methods post
@@ -116,6 +252,7 @@ router.get('/order_complete', function(request, response, next) {
     }
 
 })
+
 router.get('/order_by_orderId', function(request, response) {
     var conditions = {}
     if (request.query.orderId && request.query.orderId.length > 0) {
@@ -133,6 +270,46 @@ router.get('/order_by_orderId', function(request, response) {
 })
 
 // MARK: Method put
+router.put('/cancel_order', function(request, response) {
+    if (request.body.shipperId && request.body.orderId) {
+        const shipperId = request.body.shipperId
+        const orderId = request.body.orderId
+        Order.findOne({
+            $and: [
+                { orderId: orderId },
+                { shipperId: shipperId }
+            ]
+        }, function(err, orderData) {
+            if (err) {
+                responseResult("Error", response, "Error is " + err, {})
+            } else if (orderData) {
+                if (orderData.status == 2) {
+                    // don't allow to cancel order
+                    responseResult("DontAllow", response, "Your order accepted to ship by orderer", {})
+                } else if (orderData.status == 1) {
+                    // allow to cancel order
+                    Order.update({
+                        orderId: orderId
+                    }, {
+                        $set: { shipperId: "", status: 0 }
+                    }, function(err, raw) {
+                        if (err) {
+                            responseResult("Error", response, "Error is " + err, {})
+                        } else {
+                            responseResult("AllowCancel", response, "You canceled order", {})
+                        }
+                    })
+                }
+            } else {
+                responseResult("Error", response, "shipper id do not match shipper id of order", {})
+            }
+        })
+    } else {
+        responseResult("Error", response, "shipper id and order id is null", {})
+    }
+})
+
+
 router.put('/accept_order', function(request, response) {
     if (request.body.shipperId && request.body.orderId) {
         const shipperId = request.body.shipperId
@@ -166,7 +343,23 @@ router.put('/accept_order', function(request, response) {
                 })
             }
         })
+    } else {
+        responseResult("Error", response, "You must enter order id and shipper id", {})
+    }
+})
 
+router.put('/completed_ship_order', function(request, response) {
+    if (request.body.orderId) {
+        const orderId = request.body.orderId
+        Order.update({ orderId: orderId }, {
+            $set: { isComplete: true }
+        }, function(err, raw) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else {
+                responseResult(true, response, "finish", {})
+            }
+        })
     }
 })
 
@@ -175,7 +368,6 @@ router.put('/update_order', function(request, response) {
     if (request.body.orderId && request.body.orderId.length > 0) {
         conditions.orderId = request.body.orderId
         const orderToUpdate = createOrderToUpdate(request)
-        console.log(orderToUpdate)
         Order.findOneAndUpdate(conditions, { $set: orderToUpdate }, { new: true }, (err, data) => {
             if (err) {
                 responseResult(false, response, "Update query failed. Error was " + err, {})
