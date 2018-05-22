@@ -4,10 +4,12 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var prices = require('./routes/price');
 var orders = require('./routes/orders');
+var MongoStore = require('connect-mongo')(session);
 
 var app = express();
 
@@ -24,6 +26,18 @@ mongoose.connect('mongodb://admin:admin@ds111568.mlab.com:11568/wheel-ship-db').
         console.log("connect failed, error is " + err)
     }
 )
+
+var db = mongoose.connection;
+
+//use sessions for tracking logins
+app.use(session({
+    secret: 'work hard',
+    resave: true,
+    saveUninitialized: false,
+    store: new MongoStore({
+        mongooseConnection: db
+    })
+}));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
