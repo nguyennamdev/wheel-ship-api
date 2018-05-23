@@ -40,10 +40,9 @@ router.post('/orderer/insert_new_order', function(request, response) {
 
 // gets
 router.get('/orderer/order_by_user', function(request, response, next) {
-    var conditions = {}
     if (request.query.userId && request.query.userId.length > 0) {
-        conditions.userId = request.query.userId
-        Order.find(conditions).exec(function(err, res) {
+        const userId = request.query.userId
+        Order.find({ $and: [{ userId: userId }, { isComplete: false }] }).exec(function(err, res) {
             if (err) {
                 responseResult(false, response, "Find query failed. Error was " + err, {});
             } else {
@@ -98,33 +97,58 @@ router.get('/orderer/list_order_wait_response', function(request, response) {
     if (request.query.userId) {
         const userId = request.query.userId
         Order.aggregate([{
-            $match: { $and: [{ status: 1 }, { userId: userId }] }
-        }, {
-            $lookup: {
-                from: "users",
-                localField: "shipperId",
-                foreignField: "uid",
-                as: "shipperData"
+                $match: { $and: [{ status: 1 }, { userId: userId }] }
+            },
+            {
+                $sort: { stopTime: -1 }
+            }, {
+                $lookup: {
+                    from: "users",
+                    localField: "shipperId",
+                    foreignField: "uid",
+                    as: "userData"
+                }
+            }, {
+                $unwind: "$userData"
+            }, {
+                $project: {
+                    "userData._id": 0,
+                    "userData.password": 0,
+                    "userData.isActive": 0,
+                    "userData.isShipper": 0,
+                    "userData.email": 0,
+                    "userData.orders": 0
+                }
             }
-        }, {
-            $unwind: "$shipperData"
-        }, {
-            $project: {
-                "shipperData._id": 0,
-                "shipperData.uid": 0,
-                "shipperData.password": 0,
-                "shipperData.isActive": 0,
-                "shipperData.isShipper": 0,
-                "shipperData.email": 0,
-                "shipperData.imageUrl": 0,
-                "shipperData.orders": 0
-            }
-        }]).exec(function(err, result) {
+        ]).exec(function(err, result) {
             if (err) {
                 responseResult(false, response, "Error is " + err, {})
             } else {
                 responseResult(true, response, "Query was successful", result)
             }
+        })
+    }
+})
+
+router.get('/orderer/count_order_wait_response', function(request, response) {
+    if (request.query.userId) {
+        const userId = request.query.userId
+        Order.aggregate([{
+            $match: {
+                $and: [{
+                    userId: userId,
+                }, {
+                    status: 1
+                }]
+            }
+        }, {
+            $count: "size"
+        }]).exec(function(err, result) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+                return
+            }
+            responseResult(true, response, "number of notifications", result)
         })
     }
 })
@@ -137,7 +161,29 @@ router.put('/orderer/agree_to_ship', function(request, response) {
         Order.update({
             $and: [{ orderId: orderId }, { shipperId: shipperId }]
         }, {
-            $set: { status: 2, startTime: Date.now() } // had shipper 
+            $set: { status: 2, stopTime: Date.now() } // had shipper 
+        }, function(err, raw) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else if (!raw) {
+                responseResult(false, response, "Can not found that order", {})
+            } else {
+                responseResult(true, response, "Confirm completed", {})
+            }
+        })
+    } else {
+        responseResult(false, response, "order id or shipper id is null", {})
+    }
+})
+
+router.put('/orderer/disagree_to_ship', function(request, response) {
+    if (request.body.orderId && request.body.shipperId) {
+        const orderId = request.body.orderId
+        const shipperId = request.body.shipperId
+        Order.update({
+            $and: [{ orderId: orderId }, { shipperId: shipperId }]
+        }, {
+            $set: { status: 0, shipperId: "" }
         }, function(err, raw) {
             if (err) {
                 responseResult(false, response, "Error is " + err, {})
@@ -158,7 +204,7 @@ router.put('/orderer/update_order', function(request, response) {
     if (request.body.orderId && request.body.orderId.length > 0) {
         conditions.orderId = request.body.orderId
         const orderToUpdate = createOrderToUpdate(request)
-        Order.findOneAndUpdate(conditions, { $set: orderToUpdate }, { new: true }, (err, data) => {
+        Order.findOneAndUpdate(conditions, { $set: { orderToUpdate, startTime: Date.now() } }, { new: true }, (err, data) => {
             if (err) {
                 responseResult(false, response, "Update query failed. Error was " + err, {})
             } else {
@@ -186,9 +232,6 @@ router.delete('/orderer/delete_order', function(request, response) {
         responseResult(false, response, "order id is null", {})
     }
 })
-
-
-
 
 // MARK: Methods for shipper
 
@@ -368,6 +411,73 @@ router.get('/shipper/list_order_completed', function(request, response) {
 
 })
 
+router.get('/shipper/count_order_responsed', function(request, response) {
+    if (request.query.shipperId) {
+        const shipperId = request.query.shipperId
+        Order.aggregate([{
+            $match: {
+                $and: [{
+                    shipperId: shipperId,
+                }, {
+                    status: 2
+                }, {
+                    isComplete: false
+                }]
+            }
+        }, {
+            $count: "size"
+        }]).exec(function(err, result) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+                return
+            }
+            responseResult(true, response, "number of notifications", result)
+        })
+    }
+})
+
+router.get('/shipper/list_oder_agreed', function(request, response) {
+    if (request.query.shipperId) {
+        const shipperId = request.query.shipperId
+        Order.aggregate([{
+                $match: { $and: [{ status: 2 }, { shipperId: shipperId }, { isComplete: false }] }
+            },
+            {
+                $sort: { stopTime: -1 }
+            }, {
+                $lookup: {
+                    from: "users",
+                    localField: "shipperId",
+                    foreignField: "uid",
+                    as: "userData"
+                }
+            }, {
+                $unwind: "$userData"
+            }, {
+                $project: {
+                    "userData._id": 0,
+                    "userData.password": 0,
+                    "userData.isActive": 0,
+                    "userData.isShipper": 0,
+                    "userData.email": 0,
+                    "userData.orders": 0
+                }
+            }
+        ]).exec(function(err, result) {
+            if (err) {
+                responseResult(false, response, "Error is " + err, {})
+            } else {
+                responseResult(true, response, "Query was successful", result)
+            }
+        })
+    } else {
+        responseResult(false, response, "shipper id is null", {})
+    }
+})
+
+
+// puts
+
 router.put('/shipper/cancel_order', function(request, response) {
     if (request.body.shipperId && request.body.orderId) {
         const shipperId = request.body.shipperId
@@ -431,7 +541,7 @@ router.put('/shipper/accept_order', function(request, response) {
                 Order.update({
                     orderId: orderId
                 }, {
-                    $set: { shipperId: shipperId, status: 1 }
+                    $set: { shipperId: shipperId, status: 1, stopTime: Date.now() }
                 }, function(err, raw) {
                     if (err) {
                         responseResult("False", response, "Error is " + err, {})

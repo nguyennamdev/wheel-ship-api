@@ -144,6 +144,22 @@ router.get('/logout', function(request, response, next) {
     }
 })
 
+router.get('/profile_user', function(request, response, next) {
+    if (request.query.userId) {
+        const uid = request.query.userId
+        User.findOne({ uid: uid }, { password: 0, orders: 0, uid: 0, _id: 0, isShipper: 0, isActive: 0, email: 0 },
+            function(err, userData) {
+                if (err) {
+                    responseResult(false, response, "Error is " + err, {})
+                    return
+                }
+                responseResult(true, response, "find query was succesful", userData)
+            })
+    } else {
+        responseResult(false, response, "user id is null", {})
+    }
+})
+
 // MARK: Methods put
 
 
