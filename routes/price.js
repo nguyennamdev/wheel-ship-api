@@ -29,7 +29,7 @@ router.get('/price_weights', function(request, response) {
 })
 
 router.get('/price_distance', function(request, response) {
-    Price.find({ "category": "price_of_distance" }).limit(1).exec(function(error, data) {
+    Price.find({ "category": "price_of_distance" }).sort({ "pId": 1 }).exec(function(error, data) {
         if (error) {
             return
         }

@@ -102,9 +102,7 @@ router.post('/login', function(request, response, next) {
                 if (err) {
                     return responseResult(false, response, err, {})
                 } else if (!userData) {
-                    var err = new Error("User not found")
-                    err.status = 401;
-                    return responseResult(false, response, err, {})
+                    return responseResult(false, response, "Tài khoản không tồn tại", {})
                 }
                 if (password == userData.password) {
                     request.session.userId = userData.uid
