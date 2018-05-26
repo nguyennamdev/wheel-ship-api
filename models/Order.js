@@ -4,7 +4,6 @@ const Schema = mongoose.Schema
 
 
 // create order model 
-
 const Order = new Schema({
     orderId: { type: String, required: true },
     userId: { type: String, required: true },

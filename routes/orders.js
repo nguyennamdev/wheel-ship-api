@@ -439,7 +439,7 @@ router.get('/shipper/count_order_responsed', function(request, response) {
     }
 })
 
-router.get('/shipper/list_oder_agreed', function(request, response) {
+router.get('/shipper/list_order_agreed', function(request, response) {
     if (request.query.shipperId) {
         const shipperId = request.query.shipperId
         Order.aggregate([{
@@ -590,6 +590,7 @@ function createNewOrder(request) {
             longtitude: request.body.desLongtitude
         },
         distance: request.body.distance,
+        startTime: request.body.startTime,
         stopTime: request.body.stopTime,
         isFragile: request.body.isFragile,
         note: request.body.note,
