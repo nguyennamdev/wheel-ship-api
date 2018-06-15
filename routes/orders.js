@@ -283,9 +283,9 @@ router.get('/shipper/order_saved_by_shipper', function(request, response) {
                 // get list order by array order id 
                 Order.aggregate([{
                         $match: {
-                            $and: [{ orderId: { "$in": userData.orders } },
-                                { isComplete: false },
-                                { $or: [{ status: 0 }, { status: 1 }] }
+                            $and: [
+                                { orderId: { "$in": userData.orders } },
+                                { isComplete: false }
                             ]
                         }
                     },
