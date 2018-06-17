@@ -204,13 +204,27 @@ router.put('/orderer/update_order', function(request, response) {
     if (request.body.orderId && request.body.orderId.length > 0) {
         conditions.orderId = request.body.orderId
         const orderToUpdate = createOrderToUpdate(request)
+        Order.update(
+            conditions, {
+                $set: orderToUpdate
+            },
+            function(err, raw) {
+                if (err) {
+                    responseResult(false, response, "Update query failed. Error was " + err, {})
+                } else {
+                    responseResult(true, response, "Update query was successful", raw)
+                }
+            }
+        )
+
+        /*
         Order.findOneAndUpdate(conditions, { $set: { orderToUpdate, startTime: Date.now() } }, { new: true }, (err, data) => {
             if (err) {
                 responseResult(false, response, "Update query failed. Error was " + err, {})
             } else {
                 responseResult(true, response, "Update query was successful", data)
             }
-        })
+        })*/
     } else {
         responseResult(false, response, "Order id is null", {})
     }
@@ -234,7 +248,6 @@ router.delete('/orderer/delete_order', function(request, response) {
 })
 
 // MARK: Methods for shipper
-
 router.get('/shipper/list_order', function(require, response) {
     Order.aggregate([{
             $match: { status: 0 }
@@ -611,67 +624,67 @@ function createNewOrder(request) {
 function createOrderToUpdate(request) {
     const updateOrder = {}
         // check parameters value not null to update order
-    if (request.body.originAddress && request.body.originAddress.length > 0) {
+    if (request.body.originAddress) {
         updateOrder.originAddress = request.body.originAddress
     }
-    if (request.body.oriLatitude && request.body.oriLatitude.length > 0) {
+    if (request.body.oriLatitude) {
         updateOrder.oriLatitude = request.body.oriLatitude
     }
-    if (request.body.oriLongtitude && request.body.oriLongtitude.length > 0) {
+    if (request.body.oriLongtitude) {
         updateOrder.oriLongtitude = request.body.oriLongtitude
     }
-    if (request.body.destinationAddress && request.body.destinationAddress.length > 0) {
+    if (request.body.destinationAddress) {
         updateOrder.destinationAddress = request.body.destinationAddress
     }
-    if (request.body.desLatitude && request.body.desLatitude.length > 0) {
+    if (request.body.desLatitude) {
         updateOrder.desLatitude = request.body.desLatitude
     }
-    if (request.body.desLongtitude && request.body.desLongtitude.length > 0) {
+    if (request.body.desLongtitude) {
         updateOrder.desLongtitude = request.body.desLongtitude
     }
-    if (request.body.distance && request.body.distance.length > 0) {
+    if (request.body.distance) {
         updateOrder.distance = request.body.distance
     }
-    if (request.body.isFragile && request.body.isFragile.length > 0) {
+    if (request.body.isFragile) {
         updateOrder.isFragile = request.body.isFragile
     }
-    if (request.body.note && request.body.note.length > 0) {
+    if (request.body.note) {
         updateOrder.note = request.body.note
     }
-    if (request.body.phoneReceiver && request.body.phoneReceiver.length > 0) {
+    if (request.body.phoneReceiver) {
         updateOrder.phoneReceiver = request.body.phoneReceiver
     }
-    if (request.body.weight && request.body.weight.length > 0) {
+    if (request.body.weight) {
         updateOrder.weight = request.body.weight
     }
-    if (request.body.status && request.body.status.length > 0) {
+    if (request.body.status) {
         updateOrder.status = request.body.status
     }
-    if (request.body.prepayment && request.body.prepayment.length > 0) {
+    if (request.body.prepayment) {
         updateOrder.prepayment = request.body.prepayment
     }
-    if (request.body.feeShip && request.body.feeShip.length > 0) {
+    if (request.body.feeShip) {
         updateOrder.feeShip = request.body.feeShip
     }
-    if (request.body.priceOfWeight && request.body.priceOfWeight.length > 0) {
+    if (request.body.priceOfWeight) {
         updateOrder.priceOfWeight = request.body.priceOfWeight
     }
-    if (request.body.priceOfOrderFragile && request.body.priceOfOrderFragile.length > 0) {
+    if (request.body.priceOfOrderFragile) {
         updateOrder.priceOfOrderFragile = request.body.priceOfOrderFragile
     }
-    if (request.body.overheads && request.body.overheads.length > 0) {
+    if (request.body.overheads) {
         updateOrder.overheads = request.body.overheads
     }
-    if (request.body.stopTime && request.body.stopTime.length > 0) {
+    if (request.body.stopTime) {
         updateOrder.stopTime = request.body.stopTime
     }
-    if (request.body.isComplete && request.body.isComplete.length > 0) {
+    if (request.body.isComplete) {
         updateOrder.isComplete = request.body.isComplete
     }
-    if (request.body.shipperId && request.body.shipperId.length > 0) {
+    if (request.body.shipperId) {
         updateOrder.shipperId = request.body.shipperId
     }
-    updateOrder.stopTime = Date.now()
+    updateOrder.startTime = Date.now()
     return updateOrder
 }
 
